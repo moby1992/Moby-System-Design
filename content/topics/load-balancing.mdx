@@ -1,0 +1,77 @@
+---
+title: Load Balancing
+slug: load-balancing
+category: Scaling & Traffic
+order: 1
+summary: How to spread incoming traffic across many servers so no single machine gets overwhelmed.
+keywords: [load balancer, round robin, least connections, health check, scaling, high availability]
+readTime: 7 min
+---
+
+A **load balancer** sits in front of a group of servers and decides which server should handle each incoming request.
+
+<Layman>
+
+Imagine a popular restaurant with one very polite host at the door. As guests arrive, the host doesn't send everyone to the same waiter — that waiter would collapse. Instead, the host seats each new group with whichever waiter is least busy.
+
+A load balancer is that host, but for web traffic. Thousands of people visit your website at once, and the load balancer quietly sends each visitor to whichever server has room, so nobody waits and no server burns out.
+
+</Layman>
+
+<Standard>
+
+A load balancer is a reverse proxy that distributes inbound client requests across a pool of backend servers (often called the *upstream* pool). It improves **throughput**, **availability**, and **horizontal scalability** by ensuring no single node becomes a bottleneck or single point of failure.
+
+It operates at either **Layer 4** (transport — routing by IP/port, fast and protocol-agnostic) or **Layer 7** (application — routing by HTTP path, headers, or cookies, enabling smarter decisions at higher CPU cost).
+
+</Standard>
+
+## How it decides where to send traffic
+
+<Layman>
+
+The host has a few simple strategies:
+
+- **Take turns:** send the next guest to the next waiter in line, round and round.
+- **Least busy:** send the next guest to whoever currently has the fewest tables.
+- **Stick with your waiter:** if a guest needs to come back, send them to the same waiter who already knows their order.
+
+</Layman>
+
+<Standard>
+
+Common balancing algorithms:
+
+- **Round robin** — cycle through servers sequentially. Simple, but ignores actual load.
+- **Least connections** — route to the node with the fewest active connections. Better for long-lived or uneven requests.
+- **IP hash / sticky sessions** — consistently map a client to the same backend, useful when session state lives on the server.
+- **Weighted variants** — assign capacity weights so more powerful nodes receive proportionally more traffic.
+
+</Standard>
+
+## Health checks keep it honest
+
+<Layman>
+
+The host keeps glancing at each waiter. If one suddenly goes home sick, the host stops seating people there — automatically, without the guests ever noticing.
+
+</Layman>
+
+<Standard>
+
+Load balancers continuously poll backends with **health checks** (e.g. periodic `GET /healthz`). Unhealthy nodes are removed from rotation until they recover, which is what gives a load-balanced system its **fault tolerance**. The balancer itself is typically deployed in a redundant pair to avoid becoming a single point of failure.
+
+</Standard>
+
+<Mermaid chart={`flowchart LR
+  C1[Client] --> LB{Load Balancer}
+  C2[Client] --> LB
+  C3[Client] --> LB
+  LB -->|healthy| S1[Server A]
+  LB -->|healthy| S2[Server B]
+  LB -.x.-|unhealthy| S3[Server C]
+`} />
+
+## When you'd reach for it
+
+You introduce a load balancer the moment one server can no longer handle your traffic, or the moment you need **zero-downtime deploys** and **redundancy**. It is the foundational building block of nearly every horizontally scaled system.

@@ -1,0 +1,80 @@
+---
+title: Message Queues
+slug: message-queues
+category: Communication
+order: 1
+summary: Let services hand off work asynchronously so a slow or busy consumer never blocks the producer.
+keywords: [message queue, kafka, rabbitmq, producer, consumer, async, decoupling, back-pressure, pub-sub]
+readTime: 8 min
+---
+
+A **message queue** is a buffer that lets one part of a system send work to another without waiting for it to finish.
+
+<Layman>
+
+Picture a busy coffee shop. You order at the till and the cashier writes your order on a cup and puts it in a line for the baristas. You don't stand at the till until your latte is ready — you step aside, and a barista picks up the next cup when they're free.
+
+A message queue is that line of cups. The cashier (one service) can keep taking orders quickly even if the baristas (another service) are slow, because the work just waits patiently in line.
+
+</Layman>
+
+<Standard>
+
+A message queue is an asynchronous communication mechanism where **producers** publish messages and **consumers** process them later. The queue **decouples** producer and consumer in three dimensions:
+
+- **Time** — they don't need to run at the same moment.
+- **Throughput** — a burst from producers is absorbed by the queue instead of overwhelming consumers.
+- **Failure** — if a consumer crashes, messages remain queued and are retried.
+
+Common implementations include **RabbitMQ**, **AWS SQS**, and the log-based **Apache Kafka**.
+
+</Standard>
+
+## Why not just call the service directly?
+
+<Layman>
+
+If the cashier had to *make* every drink before taking the next order, the line out the door would be enormous. Worse, if the espresso machine broke for a minute, the whole shop would freeze. The cup-line means a hiccup in the back doesn't stop the front.
+
+</Layman>
+
+<Standard>
+
+A direct **synchronous** call couples the caller's latency and availability to the callee's. If the downstream service is slow or down, the caller blocks or fails. An asynchronous queue provides:
+
+- **Buffering / load leveling** — smooths traffic spikes so consumers process at a sustainable rate.
+- **Back-pressure** — a growing queue is a visible signal to scale out consumers.
+- **Resilience** — retries, dead-letter queues, and at-least-once delivery handle transient failures.
+
+The trade-off is **eventual** processing and added operational complexity (ordering, duplicates, idempotency).
+
+</Standard>
+
+<Mermaid chart={`flowchart LR
+  P1[Producer] --> Q[(Message Queue)]
+  P2[Producer] --> Q
+  Q --> C1[Consumer]
+  Q --> C2[Consumer]
+  Q --> C3[Consumer]
+`} />
+
+## Two flavours you'll hear about
+
+<Layman>
+
+Sometimes each cup should go to exactly one barista (a to-do list). Other times you want to *announce* something to everyone at once — like calling out "we're out of oat milk!" so every barista hears it. Queues can do both: one-to-one work, or one-to-many announcements.
+
+</Layman>
+
+<Standard>
+
+- **Point-to-point (work queue):** each message is delivered to exactly one consumer in a pool. Used to distribute tasks (RabbitMQ work queues, SQS).
+- **Publish/subscribe (pub-sub):** each message is broadcast to all interested subscribers. Used for event-driven architectures and fan-out (Kafka topics, SNS).
+
+Delivery guarantees matter: **at-least-once** is common, which means consumers should be **idempotent** so reprocessing a duplicate message is harmless.
+
+</Standard>
+
+## When to use one
+
+Reach for a queue whenever work can happen *later* rather than *now*: sending emails, processing uploads, generating reports, or smoothing out traffic spikes between services.

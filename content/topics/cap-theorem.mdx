@@ -1,0 +1,63 @@
+---
+title: CAP Theorem
+slug: cap-theorem
+category: Data
+order: 2
+summary: Why a distributed system can't perfectly have consistency, availability, and partition tolerance all at once.
+keywords: [CAP theorem, consistency, availability, partition tolerance, distributed systems, eventual consistency]
+readTime: 6 min
+---
+
+The **CAP theorem** says that when a distributed system hits a network problem, it must choose between staying *consistent* and staying *available*.
+
+<Layman>
+
+Imagine two ticket booths for the same concert, in two different cities, that normally sync with each other every second.
+
+One day the phone line between them breaks. Now there's one last ticket. Two customers, one at each booth, both want it. The booths can't talk. You face a choice:
+
+- **Play it safe (stay consistent):** both booths refuse to sell until the phone line is fixed, so you never sell the same seat twice — but customers walk away empty-handed.
+- **Keep selling (stay available):** both booths sell the ticket and you sort out the mess later — nobody is turned away, but you might double-book.
+
+You genuinely cannot have both while the phone line is down. That's the whole idea of CAP.
+
+</Layman>
+
+<Standard>
+
+CAP states that a distributed data store can simultaneously provide at most **two** of these three guarantees:
+
+- **Consistency (C):** every read receives the most recent write (or an error).
+- **Availability (A):** every request receives a non-error response (not necessarily the latest data).
+- **Partition tolerance (P):** the system keeps operating despite dropped or delayed messages between nodes.
+
+Because network **partitions are unavoidable** in any real distributed system, *P is not optional*. So the practical choice during a partition is **C vs A**: a system is effectively **CP** or **AP**.
+
+</Standard>
+
+<Mermaid chart={`flowchart TD
+  P{Network partition<br/>happens}
+  P --> CP["CP: stay Consistent<br/>(reject some requests)"]
+  P --> AP["AP: stay Available<br/>(serve possibly-stale data)"]
+`} />
+
+## What this looks like in practice
+
+<Layman>
+
+A bank leans toward "play it safe" — it would rather pause than show you the wrong balance. A social media feed leans toward "keep selling" — it would rather show you a slightly-old feed than show you an error page.
+
+</Layman>
+
+<Standard>
+
+- **CP systems** (e.g. traditional RDBMS, HBase, ZooKeeper) sacrifice availability during a partition to avoid serving stale or conflicting data. Good for financial ledgers and coordination.
+- **AP systems** (e.g. Cassandra, DynamoDB, DNS) remain available and reconcile later, typically offering **eventual consistency**. Good for feeds, shopping carts, and telemetry.
+
+A crucial nuance (**PACELC**): even when there's *no* partition (Else), you still trade **Latency vs Consistency** — synchronous replication is consistent but slower; asynchronous is faster but can be stale.
+
+</Standard>
+
+## The takeaway
+
+CAP isn't a menu you pick from once — it's a lens. For each piece of data, decide what matters more *when things go wrong*: never being wrong, or never being down.

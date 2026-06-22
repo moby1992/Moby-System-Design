@@ -1,0 +1,80 @@
+---
+title: Caching
+slug: caching
+category: Performance
+order: 1
+summary: Keep frequently used data close and ready so you don't redo expensive work on every request.
+keywords: [cache, cache-aside, TTL, eviction, redis, CDN, hit rate, invalidation]
+readTime: 8 min
+---
+
+A **cache** is a small, fast store that holds copies of data you expect to need again soon.
+
+<Layman>
+
+Think about your kitchen. You don't walk to the supermarket every time you want milk — you keep a bottle in the fridge. The supermarket is the *real* source, but the fridge is close and instant.
+
+A cache is that fridge for software. Instead of asking the slow database the same question over and over, the app keeps the answer nearby and reuses it. The first person pays the "trip to the supermarket"; everyone after that gets it instantly.
+
+</Layman>
+
+<Standard>
+
+A cache is a high-speed storage layer (often in-memory, e.g. **Redis** or **Memcached**) that stores a subset of data so future requests are served faster than recomputing or refetching from the **system of record**. Caching trades a small amount of memory and potential staleness for large reductions in **latency** and backend **load**.
+
+The key metric is **hit rate** — the fraction of requests served from cache. A high hit rate is what makes caching worthwhile.
+
+</Standard>
+
+## The most common pattern: cache-aside
+
+<Layman>
+
+The app checks the fridge first. If the milk is there, great — use it. If it's not, the app goes to the supermarket, uses the milk, *and* puts a bottle in the fridge for next time.
+
+</Layman>
+
+<Standard>
+
+In **cache-aside** (lazy loading), the application is responsible for the cache:
+
+1. Read from the cache.
+2. On a **miss**, read from the database, then write the value back into the cache.
+3. On a **hit**, return the cached value directly.
+
+Writes typically update the database and then invalidate or update the cached entry. Alternatives include **read-through**, **write-through**, and **write-back** caches, which move that responsibility into the cache layer itself.
+
+</Standard>
+
+<Mermaid chart={`flowchart TD
+  A[Request] --> B{In cache?}
+  B -->|Hit| C[Return cached value]
+  B -->|Miss| D[Query database]
+  D --> E[Store in cache]
+  E --> C
+`} />
+
+## The hard part: keeping it fresh
+
+<Layman>
+
+Milk goes bad. So you put an expiry date on it and toss it when it's old. And if the fridge gets full, you throw out whatever you haven't touched in ages to make room.
+
+</Layman>
+
+<Standard>
+
+Two mechanisms keep a cache correct and bounded:
+
+- **TTL (time to live):** entries expire after a set duration, capping how stale data can get.
+- **Eviction policy:** when the cache is full, something must go. **LRU** (least recently used) is the common default; **LFU** and **FIFO** are alternatives.
+
+> "There are only two hard things in Computer Science: cache invalidation and naming things." — Phil Karlton
+
+Stale reads are the central trade-off: caching is fundamentally a bet that slightly-old data is acceptable in exchange for speed.
+
+</Standard>
+
+## Where caches live
+
+Caches appear at every layer: the **browser**, a **CDN** at the network edge, an **application cache** like Redis, and even inside the **database** itself. Each layer shortens the journey for the most popular data.

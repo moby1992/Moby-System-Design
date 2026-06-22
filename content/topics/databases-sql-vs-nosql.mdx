@@ -1,0 +1,85 @@
+---
+title: SQL vs NoSQL Databases
+slug: databases-sql-vs-nosql
+category: Data
+order: 1
+summary: Two families of databases, what each is good at, and how to choose between them.
+keywords: [sql, nosql, relational, document, key-value, ACID, schema, scaling, postgres, mongodb]
+readTime: 9 min
+---
+
+**SQL** and **NoSQL** describe two broad families of databases with different ways of organizing data.
+
+<Layman>
+
+Picture two ways of storing your stuff.
+
+A **SQL database** is like a perfectly organized filing cabinet. Every document goes in a labelled folder with a strict format — name here, date there, no exceptions. Finding things and cross-referencing is wonderfully reliable.
+
+A **NoSQL database** is more like a big set of labelled boxes. Each box can hold whatever shape of thing you want. It's flexible and easy to add more boxes, but you give up some of that strict, cross-referenced tidiness.
+
+</Layman>
+
+<Standard>
+
+**SQL (relational) databases** — e.g. PostgreSQL, MySQL — store data in tables of rows and columns with a fixed **schema**, and relate tables via keys. They typically guarantee **ACID** transactions (Atomicity, Consistency, Isolation, Durability) and are queried with SQL.
+
+**NoSQL databases** are a family of non-relational stores optimized for flexibility and horizontal scale:
+
+- **Document** (MongoDB) — JSON-like documents, flexible schema.
+- **Key-value** (Redis, DynamoDB) — simple, extremely fast lookups by key.
+- **Wide-column** (Cassandra) — huge, sparse tables across many nodes.
+- **Graph** (Neo4j) — nodes and edges for highly connected data.
+
+</Standard>
+
+## How they scale
+
+<Layman>
+
+The filing cabinet works best as one really good, well-organized cabinet. When you need more room, you usually buy a *bigger* cabinet.
+
+The boxes are different — when you run out of space, you just add more boxes, even in another room or another building. Spreading out is natural for them.
+
+</Layman>
+
+<Standard>
+
+- **SQL** traditionally scales **vertically** (a bigger machine). Horizontal scaling is possible via read replicas and sharding, but joins and transactions across shards are hard.
+- **NoSQL** is generally designed to scale **horizontally** from the start — data is partitioned across commodity nodes, trading strict consistency or rich querying for elasticity.
+
+This maps onto the **CAP theorem**: distributing data forces trade-offs between consistency and availability during network partitions.
+
+</Standard>
+
+<Mermaid chart={`flowchart LR
+  subgraph SQL["SQL — structured tables"]
+    U[(Users)] -->|user_id| O[(Orders)]
+  end
+  subgraph NoSQL["NoSQL — flexible documents"]
+    D["{ user: 'Ada',<br/>orders: [ ... ] }"]
+  end
+`} />
+
+## Choosing between them
+
+<Layman>
+
+Use the filing cabinet when correctness really matters and things relate to each other — money, orders, bookings. Use the boxes when your data is varied or huge and you need to grow fast — activity feeds, sensor data, catalogs.
+
+And it's perfectly normal to use *both* in one system.
+
+</Layman>
+
+<Standard>
+
+| Choose **SQL** when… | Choose **NoSQL** when… |
+| --- | --- |
+| You need strong consistency & transactions | You need massive horizontal scale |
+| Data is highly relational | Schema is fluid or evolving |
+| Complex queries / joins matter | Access patterns are simple & known |
+| Examples: payments, inventory | Examples: feeds, caching, telemetry |
+
+Modern systems are frequently **polyglot**: a relational store as the source of truth, plus a key-value cache and a document or search store alongside it. Pick per workload, not per dogma.
+
+</Standard>
